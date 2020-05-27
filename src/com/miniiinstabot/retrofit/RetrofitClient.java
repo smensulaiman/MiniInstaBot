@@ -1,4 +1,4 @@
-package com.miniiinstabo.retrofit;
+package com.miniiinstabot.retrofit;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -1,6 +1,6 @@
 package com.miniiinstabot.gui;
 
-import com.miniiinstabo.utils.Constants;
+import com.miniiinstabot.utils.Constants;
 import com.miniiinstabot.interfaces.ResponseInterface;
 import com.miniiinstabot.manager.BrowserController;
 import com.miniiinstabot.manager.DriverManager;

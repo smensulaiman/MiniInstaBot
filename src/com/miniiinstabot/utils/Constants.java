@@ -1,4 +1,4 @@
-package com.miniiinstabo.utils;
+package com.miniiinstabot.utils;
 
 /**
  *
