@@ -1,19 +1,37 @@
 package com.miniiinstabot.gui;
 
+import com.miniiinstabot.interfaces.PageLoadInterface;
 import com.miniiinstabot.utils.Constants;
 import com.miniiinstabot.interfaces.ResponseInterface;
 import com.miniiinstabot.manager.BrowserController;
 import com.miniiinstabot.manager.DriverManager;
+import com.miniiinstabot.model.UserAuthModel;
+import com.miniiinstabot.utils.Utils;
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
+import static java.lang.Thread.sleep;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.text.DefaultCaret;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import sun.text.normalizer.UTF16;
 
 /**
  *
@@ -25,12 +43,16 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     private WebDriver driver;
     private WebElement element;
     private Thread firstTimeLogInLoad;
+    private Utils utils;
+    private int userIndex = 0;
+
+    private List<UserAuthModel> userAuthModels;
 
     public MainDashboard() {
         initComponents();
         initTable();
         chkPostComment.setSelected(true);
-
+        utils = new Utils();
         try {
             loadWebDriver();
         } catch (Exception e) {
@@ -45,11 +67,11 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                     driver.close();
                     driver.quit();
                 }
-                
-                if(firstTimeLogInLoad != null){
+
+                if (firstTimeLogInLoad != null) {
                     firstTimeLogInLoad.stop();
                 }
-                
+
                 e.getWindow().dispose();
             }
 
@@ -60,6 +82,10 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                     public void run() {
 
                         new BrowserController().gotoURL(driver, Constants.BASE_URL_INSTA);
+
+                        if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
+                            onResponse("Log In page loaded....");
+                        }
                     }
                 });
                 firstTimeLogInLoad.start();
@@ -96,6 +122,16 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
 
         onResponse("Redirecting to Instagram login :" + Constants.BASE_URL_INSTA);
+    }
+
+    public void waitForLoad(WebDriver driver) {
+        ExpectedCondition<Boolean> pageLoadCondition = new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver driver) {
+                return ((JavascriptExecutor) driver).executeScript("return document.readyState").equals("complete");
+            }
+        };
+        WebDriverWait wait = new WebDriverWait(driver, 30);
+        wait.until(pageLoadCondition);
     }
 
     @SuppressWarnings("unchecked")
@@ -332,6 +368,11 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         btnComment.setText("jButton3");
 
         btnAuth.setText("jButton3");
+        btnAuth.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAuthActionPerformed(evt);
+            }
+        });
 
         btnUrl.setText("jButton3");
 
@@ -339,11 +380,21 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         jButton3.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
         jButton3.setForeground(new java.awt.Color(255, 255, 255));
         jButton3.setText("CHECK");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setBackground(new java.awt.Color(255, 153, 0));
         jButton4.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
         jButton4.setForeground(new java.awt.Color(255, 255, 255));
         jButton4.setText("LOAD");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
 
         jButton5.setBackground(new java.awt.Color(255, 51, 51));
         jButton5.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
@@ -471,6 +522,56 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton6ActionPerformed
 
+    private void btnAuthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAuthActionPerformed
+        // TODO add your handling code here:
+        JFileChooser fileChooser = new JFileChooser();
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
+        fileChooser.setFileFilter(filter);
+        int returnVal = fileChooser.showOpenDialog(MainDashboard.this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+            File file = fileChooser.getSelectedFile();
+            txtAuth.setText(file.getAbsolutePath());
+
+        }
+    }//GEN-LAST:event_btnAuthActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+        if (txtAuth.getText().toString().trim() != null) {
+            try {
+                File file = new File(txtAuth.getText().toString().trim());
+                userAuthModels = utils.getUserAuthList(Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
+
+                if (userAuthModels != null) {
+                    if (userAuthModels.size() > 0) {
+                        txtResult.append("\n" + Constants.STAR);
+                        txtResult.append("\n" + userAuthModels.size() + " User(s) Found");
+                        txtResult.append("\n" + Constants.STAR + "\n");
+
+                        int index = 1;
+                        tableModel.setRowCount(0);
+                        for (UserAuthModel userAuthModel : userAuthModels) {
+                            txtResult.append("\nFor User :" + index + "\nID : " + userAuthModel.getEmail() + "\nPassword : " + userAuthModel.getPassword() + "\n");
+                            tableModel.addRow(new Object[]{userAuthModel.getEmail(), userAuthModel.getPassword(), "Enque"});
+                            index++;
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+
+        if (userAuthModels != null) {
+            login(userAuthModels);
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
     public static void main(String args[]) {
 
         try {
@@ -541,5 +642,136 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     public void onResponse(String message) {
         String time = new SimpleDateFormat("hh:mm:ss").format(new Date());
         txtResult.append(time + " --> " + message + "\n");
+    }
+
+    private void openLogInUrl(PageLoadInterface pageLoadInterface) {
+        firstTimeLogInLoad = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                new BrowserController().gotoURL(driver, Constants.BASE_URL_INSTA);
+                try {
+                    sleep(2000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
+                    onResponse("Log In page loaded....");
+                    pageLoadInterface.onPageLoad();
+                    firstTimeLogInLoad.stop();
+                }else{
+                    onResponse("Log In page loaded....Another Title");
+                    pageLoadInterface.onPageLoad();
+                    firstTimeLogInLoad.stop();
+                }
+            }
+        });
+        firstTimeLogInLoad.start();
+    }
+
+    private void login(List<UserAuthModel> userAuthModels) {
+        int attempt = 1;
+        onResponse("Attempt : " + attempt);
+        logInSingleUser(userAuthModels.get(0));
+    }
+
+    private void login(List<UserAuthModel> userAuthModels, int index) {
+        int attempt = 1;
+        onResponse("Attempt : " + index);
+        if (index < userAuthModels.size()) {
+            logInSingleUser(userAuthModels.get(index));
+        }
+    }
+
+    private void logInSingleUser(UserAuthModel userAuthModel) {
+        if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
+
+            try {
+                driver.findElement(By.xpath(Constants.XPATH_UID)).sendKeys(userAuthModel.getEmail());
+                driver.findElement(By.xpath(Constants.XPATH_PASS)).sendKeys(userAuthModel.getPassword());
+                sleep(500);
+                driver.findElement(By.xpath(Constants.XPATH_LINBTN)).click();
+                waitForLoad(driver);
+                sleep(2000);
+                if (driver.getPageSource().contains("We Detected An Unusual Login Attempt")) {
+                    onResponse("Suspicious Login Attempt");
+                    driver.findElement(By.xpath(Constants.XPATH_LOUTBTN)).click();
+                    sleep(2000);
+                    login(userAuthModels, userIndex++);
+                } else if (driver.getPageSource().contains("Sorry, your password was incorrect. Please double-check your password.") || driver.getPageSource().contains("The username you entered doesn't belong to an account. Please check your username and try again.")) {
+                    onResponse("Sorry, your username or password was incorrect. Please double-check.");
+
+                    openLogInUrl(new PageLoadInterface() {
+                        @Override
+                        public void onPageLoad() {
+
+                            try {
+                                sleep(2000);
+                                login(userAuthModels, userIndex++);
+                            } catch (InterruptedException ex) {
+                                Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+
+                        }
+                    });
+                } else {
+                    onResponse("ERROR");
+                }
+
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+
+        } else if (driver.findElement(By.xpath(Constants.XPATH_UID2)).isDisplayed()) {
+            try {
+
+                driver.findElement(By.xpath(Constants.XPATH_UID2)).sendKeys(userAuthModel.getEmail());
+                driver.findElement(By.xpath(Constants.XPATH_PASS2)).sendKeys(userAuthModel.getPassword());
+                sleep(500);
+                driver.findElement(By.xpath(Constants.XPATH_LINBTN2)).click();
+                waitForLoad(driver);
+                sleep(2000);
+                if (driver.getPageSource().contains("We Detected An Unusual Login Attempt")) {
+                    onResponse("Suspicious Login Attempt");
+                    driver.findElement(By.xpath(Constants.XPATH_LOUTBTN)).click();
+                    sleep(2000);
+                    login(userAuthModels, userIndex++);
+                } else if (driver.getPageSource().contains("Sorry, your password was incorrect. Please double-check your password.") || driver.getPageSource().contains("The username you entered doesn't belong to an account. Please check your username and try again.")) {
+                    onResponse("Sorry, your username or password was incorrect. Please double-check.");
+
+                    openLogInUrl(new PageLoadInterface() {
+                        @Override
+                        public void onPageLoad() {
+
+                            try {
+                                sleep(2000);
+                            } catch (InterruptedException ex) {
+                                Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            login(userAuthModels, userIndex++);
+
+                        }
+                    });
+
+                } else {
+                    onResponse("ERROR");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            openLogInUrl(new PageLoadInterface() {
+                @Override
+                public void onPageLoad() {
+                    try {
+                        sleep(2000);
+                        logInSingleUser(userAuthModel);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+        }
     }
 }
