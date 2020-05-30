@@ -1,6 +1,5 @@
 package com.miniiinstabot.gui;
 
-import com.miniiinstabot.interfaces.PageLoadInterface;
 import com.miniiinstabot.utils.Constants;
 import com.miniiinstabot.interfaces.ResponseInterface;
 import com.miniiinstabot.manager.BrowserController;
@@ -11,7 +10,6 @@ import com.miniiinstabot.utils.Utils;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import static java.lang.Thread.sleep;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
@@ -27,12 +25,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.text.DefaultCaret;
 import me.postaddict.instagram.scraper.model.Account;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class MainDashboard extends javax.swing.JFrame implements ResponseInterface {
     
@@ -112,16 +106,6 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
         
         onResponse("Redirecting to Instagram login :" + Constants.BASE_URL_INSTA);
-    }
-    
-    public void waitForLoad(WebDriver driver) {
-        ExpectedCondition<Boolean> pageLoadCondition = new ExpectedCondition<Boolean>() {
-            public Boolean apply(WebDriver driver) {
-                return ((JavascriptExecutor) driver).executeScript("return document.readyState").equals("complete");
-            }
-        };
-        WebDriverWait wait = new WebDriverWait(driver, 30);
-        wait.until(pageLoadCondition);
     }
     
     @SuppressWarnings("unchecked")
@@ -430,7 +414,6 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     private void btnCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckActionPerformed
         // TODO add your handling code here:
         if (userAuthModels != null) {
-            login(userAuthModels);
         }
     }//GEN-LAST:event_btnCheckActionPerformed
 
@@ -438,12 +421,12 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         try {
             // TODO add your handling code here:
             String tag = txtSearch.getText().toString().trim();
-            onResponse("Searchinr for : " + tag + ".......................................");
+            onResponse("\n\nSearchinr for : " + tag + ".......................................");
             
             InstagramScraperManager manager = new InstagramScraperManager();
             Account account = manager.getAccountByUsername(tag);
             
-            onResponse("ID : "+account.getId()+"\nName : "+account.getFullName()+"\nUser Name : "+account.getUsername()+"\nTotal Followers : "+account.getFollowedBy()+"\nBiography : "+account.getBiography());
+            onResponse("\nID : "+account.getId()+"\nName : "+account.getFullName()+"\nUser Name : "+account.getUsername()+"\nTotal Followers : "+account.getFollowedBy()+"\nBiography : "+account.getBiography());
             
         } catch (IOException ex) {
             onResponse(ex.getMessage());
@@ -522,93 +505,5 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     public void onResponse(String message) {
         String time = new SimpleDateFormat("hh:mm:ss").format(new Date());
         txtResult.append(time + " --> " + message + "\n");
-    }
-    
-    private void openLogInUrl(PageLoadInterface pageLoadInterface) {
-        firstTimeLogInLoad = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                
-                new BrowserController().gotoURL(driver, Constants.BASE_URL_INSTA);
-                try {
-                    sleep(2000);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
-                    onResponse("Log In page loaded....");
-                    pageLoadInterface.onPageLoad();
-                    firstTimeLogInLoad.stop();
-                } else {
-                    onResponse("Log In page loaded....Another Title");
-                    pageLoadInterface.onPageLoad();
-                    firstTimeLogInLoad.stop();
-                }
-            }
-        });
-        firstTimeLogInLoad.start();
-    }
-    
-    private void login(List<UserAuthModel> userAuthModels) {
-        int attempt = 1;
-        onResponse("Attempt : " + attempt);
-        logInSingleUser(userAuthModels.get(0));
-    }
-    
-    private void login(List<UserAuthModel> userAuthModels, int index) {
-        int attempt = 1;
-        onResponse("Attempt : " + index);
-        if (index < userAuthModels.size()) {
-            logInSingleUser(userAuthModels.get(index));
-        }
-    }
-    
-    private void logInSingleUser(UserAuthModel userAuthModel) {
-        if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
-            
-            try {
-                driver.findElement(By.xpath(Constants.XPATH_UID)).sendKeys(userAuthModel.getEmail());
-                driver.findElement(By.xpath(Constants.XPATH_PASS)).sendKeys(userAuthModel.getPassword());
-                sleep(500);
-                driver.findElement(By.xpath(Constants.XPATH_LINBTN)).click();
-                waitForLoad(driver);
-                sleep(2000);
-                if (driver.getPageSource().contains("We Detected An Unusual Login Attempt")) {
-                    onResponse("Suspicious Login Attempt");
-                    driver.findElement(By.xpath(Constants.XPATH_LOUTBTN)).click();
-                    sleep(2000);
-                    login(userAuthModels, userIndex++);
-                } else if (driver.getPageSource().contains("Sorry, your password was incorrect. Please double-check your password.") || driver.getPageSource().contains("The username you entered doesn't belong to an account. Please check your username and try again.")) {
-                    onResponse("Sorry, your username or password was incorrect. Please double-check.");
-                    openLogInUrl(new PageLoadInterface() {
-                        @Override
-                        public void onPageLoad() {
-                            try {
-                                sleep(2000);
-                                login(userAuthModels, userIndex++);
-                            } catch (InterruptedException ex) {
-                                Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                        }
-                    });
-                } else {
-                    onResponse("ERROR");
-                }
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
-        } else {
-            openLogInUrl(new PageLoadInterface() {
-                @Override
-                public void onPageLoad() {
-                    try {
-                        sleep(2000);
-                        logInSingleUser(userAuthModel);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            });
-        }
     }
 }
