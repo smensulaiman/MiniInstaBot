@@ -1,12 +1,16 @@
 package com.miniiinstabot.gui;
 
+import com.miniiinstabot.interfaces.CommentInterface;
+import com.miniiinstabot.interfaces.LogInInterface;
 import com.miniiinstabot.utils.Constants;
 import com.miniiinstabot.interfaces.ResponseInterface;
 import com.miniiinstabot.manager.BrowserController;
 import com.miniiinstabot.manager.DriverManager;
+import com.miniiinstabot.manager.WebPageManager;
 import com.miniiinstabot.model.UserAuthModel;
 import com.miniiinstabot.scraper.InstagramScraperManager;
 import com.miniiinstabot.utils.Utils;
+import com.mysql.jdbc.StringUtils;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +31,8 @@ import javax.swing.text.DefaultCaret;
 import me.postaddict.instagram.scraper.model.Account;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class MainDashboard extends javax.swing.JFrame implements ResponseInterface {
     
@@ -36,6 +42,9 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     private Thread firstTimeLogInLoad;
     private Utils utils;
     private int userIndex = 0;
+    WebPageManager webPageManager;
+    
+    Wait<WebDriver> wait;
     
     private List<UserAuthModel> userAuthModels;
     
@@ -103,7 +112,8 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         driverManager.setDriverInterface(this);
         
         driver = driverManager.getChromeDriver();
-        driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+        wait = new WebDriverWait(driver, 5);
         
         onResponse("Redirecting to Instagram login :" + Constants.BASE_URL_INSTA);
     }
@@ -283,7 +293,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         jPanel4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         txtAuth.setForeground(new java.awt.Color(153, 153, 153));
-        txtAuth.setText("User and Password Path");
+        txtAuth.setText("C:\\Users\\Solaiman\\Desktop\\New folder\\input.txt");
         jPanel4.add(txtAuth, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 0, 440, 30));
 
         jLabel4.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
@@ -360,7 +370,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
 
         txtDirectUrl.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
         txtDirectUrl.setForeground(new java.awt.Color(153, 153, 153));
-        txtDirectUrl.setText("Enter Post Url");
+        txtDirectUrl.setText("https://www.instagram.com/tv/CAoPI_ZHeEp/?utm_source=ig_web_copy_link");
         getContentPane().add(txtDirectUrl, new org.netbeans.lib.awtextra.AbsoluteConstraints(277, 0, 440, -1));
 
         pack();
@@ -414,6 +424,37 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     private void btnCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckActionPerformed
         // TODO add your handling code here:
         if (userAuthModels != null) {
+            System.out.println("424 Entering Thread");
+            Thread thread =  new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    webPageManager = new WebPageManager();
+                    webPageManager.logInSingleUser(driver, userAuthModels.get(0),new LogInInterface() {
+                        @Override
+                        public void onSuccess() {
+                            onResponse("LogIn Success");
+                            
+                            if(!txtDirectUrl.getText().toString().trim().equals("")){
+                               webPageManager.gotToPostLink(driver, txtDirectUrl.getText().toString().trim());
+                               webPageManager.makeComment(driver, "Thats Great",new CommentInterface() {
+                                   @Override
+                                   public void onComment() {
+                                       onResponse("Comment Successfull!!!");
+                                   }
+                               });
+                            }
+                        }
+
+                        @Override
+                        public void onFaild(String message) {
+                            onResponse(message);
+                        }
+                    });  
+                }
+            });
+            thread.start();
+        }else{
+            System.out.println("435 : User Model Null");
         }
     }//GEN-LAST:event_btnCheckActionPerformed
 

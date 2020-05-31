@@ -10,7 +10,7 @@ public class Constants {
     public static final String BASE_URL_INSTA_HOME = "https://r3.vfsglobal.com/";
     public static final String BASE_URL_2CAPTCHA = "https://2captcha.com/";
     public static final String API_KEY_2CAPTCHA = "";
-    public static final String LINK = "https://www.instagram.com/tv/CAoPI_ZHeEp/?utm_source=ig_web_copy_link";
+    public static final String POST_LINK = "https://www.instagram.com/tv/CAoPI_ZHeEp/?utm_source=ig_web_copy_link";
     public static final String CAPTCHA_ID = "CaptchaImage";
     public static final String IP_BLOCK = "This website is secured against online attacks. Your request was blocked due to suspicious behavior";
     public static final String STAR = "**********************************";
@@ -33,10 +33,17 @@ public class Constants {
     public static final String XPATH_PASS2 = "//*[@id=\"react-root\"]/section/main/article/div[2]/div[1]/div/form/div[3]/div/label/input";
     public static final String XPATH_LINBTN = "//*[@id=\"react-root\"]/section/main/div/article/div/div[1]/div/form/div[4]/button";
     public static final String XPATH_LINBTN2 = "//*[@id=\"react-root\"]/section/main/article/div[2]/div[1]/div/form/div[4]/button";
+    public static final String XPATH_DIALOG_ONE = "//*[@id=\"react-root\"]/section/main/div/div/div/div/button";
+    public static final String XPATH_DIALOG_TWO = "/html/body/div[4]/div/div/div[3]/button[2]";
     
     
     public static final String XPATH_SEND_CODE = "//*[@id=\"react-root\"]/section/div/div/div[3]/form/span/button";
     public static final String XPATH_LOUTBTN = "//*[@id=\"react-root\"]/section/div/div/div[4]/a";
+    
+    
+    public static final String CSS_COMMENT = "#react-root > section > main > div > div.ltEKP > article > div.eo2As > section.sH9wk._JgwE > div > form > textarea";
+    
+    public static final String XPATH_BTN_POST = "//*[@id=\"react-root\"]/section/main/div/div[1]/article/div[2]/section[3]/div/form/button";
     
     
     /*=========================================================================================================================================================

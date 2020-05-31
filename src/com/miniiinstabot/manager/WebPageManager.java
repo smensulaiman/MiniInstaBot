@@ -1,6 +1,8 @@
 package com.miniiinstabot.manager;
 
 import com.miniiinstabot.gui.MainDashboard;
+import com.miniiinstabot.interfaces.CommentInterface;
+import com.miniiinstabot.interfaces.LogInInterface;
 import com.miniiinstabot.interfaces.PageLoadInterface;
 import com.miniiinstabot.model.UserAuthModel;
 import com.miniiinstabot.utils.Constants;
@@ -13,8 +15,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 public class WebPageManager {
-    
-    WebPageManager webPageManager = new WebPageManager();
+
     private Utils utils = new Utils();
     private WebDriver driver;
 
@@ -23,67 +24,95 @@ public class WebPageManager {
             @Override
             public void run() {
 
-                new BrowserController().gotoURL(driver, Constants.BASE_URL_INSTA);
                 try {
+                    new BrowserController().gotoURL(driver, Constants.BASE_URL_INSTA);
                     sleep(2000);
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
+                    ex.printStackTrace();
                 }
             }
         });
         firstTimeLogInLoad.start();
     }
 
-    private void login(List<UserAuthModel> userAuthModels) {
-        int attempt = 1;
-        //onResponse("Attempt : " + attempt);
-        //logInSingleUser(userAuthModels.get(0));
+    public void logInSingleUser(WebDriver driver, UserAuthModel userAuthModel, LogInInterface logInInterface) {
+        System.out.println("Log in called");
+        try {
+            driver.findElement(By.xpath(Constants.XPATH_UID)).sendKeys(userAuthModel.getEmail());
+            driver.findElement(By.xpath(Constants.XPATH_PASS)).sendKeys(userAuthModel.getPassword());
+            sleep(500);
+            driver.findElement(By.xpath(Constants.XPATH_LINBTN)).click();
+            utils.waitForLoad(driver);
+            sleep(2000);
+
+            if (isPresent(driver, Constants.XPATH_DIALOG_ONE)) {
+                System.out.println("Alert Dialog displayed");
+                driver.findElement(By.xpath(Constants.XPATH_DIALOG_ONE)).click();
+                sleep(1000);
+            }
+
+            if (isPresent(driver, Constants.XPATH_DIALOG_TWO)) {
+                System.out.println("Notification Dialog displayed");
+                driver.findElement(By.xpath(Constants.XPATH_DIALOG_TWO)).click();
+                sleep(1000);
+
+                logInInterface.onSuccess();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            logInInterface.onFaild(e.getMessage());
+        }
     }
 
-    private void logInSingleUser(WebDriver driver, UserAuthModel userAuthModel) {
-        if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
+    public int gotToPostLink(WebDriver driver, String link) {
 
-            try {
-                driver.findElement(By.xpath(Constants.XPATH_UID)).sendKeys(userAuthModel.getEmail());
-                driver.findElement(By.xpath(Constants.XPATH_PASS)).sendKeys(userAuthModel.getPassword());
-                sleep(500);
-                driver.findElement(By.xpath(Constants.XPATH_LINBTN)).click();
-                utils.waitForLoad(driver);
-                sleep(2000);
-                if (driver.getPageSource().contains("We Detected An Unusual Login Attempt")) {
-                    //onResponse("Suspicious Login Attempt");
-                    driver.findElement(By.xpath(Constants.XPATH_LOUTBTN)).click();
-                    sleep(2000);
-                    //login(userAuthModels, userIndex++);
-                } else if (driver.getPageSource().contains("Sorry, your password was incorrect. Please double-check your password.") || driver.getPageSource().contains("The username you entered doesn't belong to an account. Please check your username and try again.")) {
-                    //onResponse("Sorry, your username or password was incorrect. Please double-check.");
-                    openLogInUrl(new PageLoadInterface() {
-                        @Override
-                        public void onPageLoad() {
-                            try {
-                                sleep(2000);
-                            } catch (InterruptedException ex) {
-                                Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                        }
-                    });
-                } else {
-                }
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
+        new BrowserController().gotoURL(driver, link);
+        return 1;
+    }
+
+    public int makeComment(WebDriver driver, String comment,CommentInterface commentInterface) {
+
+        try{
+        
+        if (isPresent(driver, By.cssSelector(Constants.CSS_COMMENT))) {
+            System.out.println("Comment Field Found.");  
+            
+            driver.findElement(By.cssSelector(Constants.CSS_COMMENT)).click();
+            driver.findElement(By.cssSelector(Constants.CSS_COMMENT)).sendKeys(comment);
+
+            if (isPresent(driver, Constants.XPATH_BTN_POST)) {
+                driver.findElement(By.xpath(Constants.XPATH_BTN_POST)).click();
+                commentInterface.onComment();
             }
-        } else {
-            openLogInUrl(new PageLoadInterface() {
-                @Override
-                public void onPageLoad() {
-                    try {
-                        sleep(2000);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            });
         }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return 1;
+    }
+
+    public boolean isPresent(WebDriver driver, String xpath) {
+        Utils utils = new Utils();
+        Boolean display = utils.isElementPresent(driver, By.xpath(xpath));
+        return display;
+    }
+
+    public boolean isPresent(WebDriver driver, By by) {
+        Utils utils = new Utils();
+        Boolean display = utils.isElementPresent(driver, by);
+        return display;
+    }
+
+    public boolean validateError(String message) {
+
+        if (message.contains("Sorry, your password was incorrect. Please double-check your password.")
+                || message.contains("Sorry, your password was incorrect. Please double-check your password.")
+                || message.contains("The username you entered doesn't belong to an account. Please check your username and try again.")) {
+            return false;
+        }
+        return true;
     }
 
 }
