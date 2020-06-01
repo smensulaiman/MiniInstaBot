@@ -10,7 +10,6 @@ import com.miniiinstabot.manager.WebPageManager;
 import com.miniiinstabot.model.UserAuthModel;
 import com.miniiinstabot.scraper.InstagramScraperManager;
 import com.miniiinstabot.utils.Utils;
-import com.mysql.jdbc.StringUtils;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
@@ -30,24 +29,20 @@ import javax.swing.table.JTableHeader;
 import javax.swing.text.DefaultCaret;
 import me.postaddict.instagram.scraper.model.Account;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class MainDashboard extends javax.swing.JFrame implements ResponseInterface {
-    
+
     private DefaultTableModel tableModel;
     private WebDriver driver;
-    private WebElement element;
     private Thread firstTimeLogInLoad;
     private Utils utils;
-    private int userIndex = 0;
-    WebPageManager webPageManager;
-    
-    Wait<WebDriver> wait;
-    
+    private WebPageManager webPageManager;
+    private Wait<WebDriver> wait;
+
     private List<UserAuthModel> userAuthModels;
-    
+
     public MainDashboard() {
         initComponents();
         initTable();
@@ -58,7 +53,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         } catch (Exception e) {
             onResponse(e.getMessage());
         }
-        
+
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -68,11 +63,15 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                     firstTimeLogInLoad.stop();
                 }
                 if (driver != null) {
-                    driver.close();
-                    driver.quit();
+                    try {
+                        driver.close();
+                        driver.quit();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
             }
-            
+
             public void windowOpened(java.awt.event.WindowEvent e) {
                 firstTimeLogInLoad = new Thread(new Runnable() {
                     @Override
@@ -80,6 +79,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                         new BrowserController().gotoURL(driver, Constants.BASE_URL_INSTA);
                         if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
                             onResponse("Log In page loaded....");
+                            firstTimeLogInLoad.stop();
                         }
                     }
                 });
@@ -89,35 +89,35 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         DefaultCaret caret = (DefaultCaret) txtResult.getCaret();
         caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
     }
-    
+
     public void initTable() {
         txtResult.append("\nPreparing header\n");
-        
+
         JTableHeader tableHeader = tableUsers.getTableHeader();
         tableHeader.setForeground(Color.decode("#4CAF50"));
-        
+
         tableModel = (DefaultTableModel) tableUsers.getModel();
         tableModel.setColumnCount(3);
-        
+
         tableUsers.getColumnModel().getColumn(0).setHeaderValue("USERID");
         tableUsers.getColumnModel().getColumn(1).setHeaderValue("PASSWORD");
         tableUsers.getColumnModel().getColumn(2).setHeaderValue("STATUS");
-        
+
         txtResult.append("Loaded Successfully\n");
     }
-    
+
     public void loadWebDriver() throws InterruptedException {
         System.setProperty("webdriver.chrome.driver", "driver\\chromedriver.exe");
         DriverManager driverManager = new DriverManager();
         driverManager.setDriverInterface(this);
-        
+
         driver = driverManager.getChromeDriver();
         driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
         wait = new WebDriverWait(driver, 5);
-        
+
         onResponse("Redirecting to Instagram login :" + Constants.BASE_URL_INSTA);
     }
-    
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -344,7 +344,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         });
         jPanel4.add(btnCheck, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 30, 80, 30));
 
-        btnLoad.setBackground(new java.awt.Color(255, 153, 0));
+        btnLoad.setBackground(new java.awt.Color(255, 102, 102));
         btnLoad.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
         btnLoad.setForeground(new java.awt.Color(255, 255, 255));
         btnLoad.setText("LOAD");
@@ -399,13 +399,13 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
             try {
                 File file = new File(txtAuth.getText().toString().trim());
                 userAuthModels = utils.getUserAuthList(Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
-                
+
                 if (userAuthModels != null) {
                     if (userAuthModels.size() > 0) {
                         txtResult.append("\n" + Constants.STAR);
                         txtResult.append("\n" + userAuthModels.size() + " User(s) Found");
                         txtResult.append("\n" + Constants.STAR + "\n");
-                        
+
                         int index = 1;
                         tableModel.setRowCount(0);
                         for (UserAuthModel userAuthModel : userAuthModels) {
@@ -425,23 +425,23 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         // TODO add your handling code here:
         if (userAuthModels != null) {
             System.out.println("424 Entering Thread");
-            Thread thread =  new Thread(new Runnable() {
+            Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     webPageManager = new WebPageManager();
-                    webPageManager.logInSingleUser(driver, userAuthModels.get(0),new LogInInterface() {
+                    webPageManager.logInSingleUser(driver, userAuthModels.get(0), new LogInInterface() {
                         @Override
                         public void onSuccess() {
                             onResponse("LogIn Success");
-                            
-                            if(!txtDirectUrl.getText().toString().trim().equals("")){
-                               webPageManager.gotToPostLink(driver, txtDirectUrl.getText().toString().trim());
-                               webPageManager.makeComment(driver, "Thats Great",new CommentInterface() {
-                                   @Override
-                                   public void onComment() {
-                                       onResponse("Comment Successfull!!!");
-                                   }
-                               });
+
+                            if (!txtDirectUrl.getText().toString().trim().equals("")) {
+                                webPageManager.gotToPostLink(driver, txtDirectUrl.getText().toString().trim());
+                                webPageManager.makeComment(driver, "Thats Great", new CommentInterface() {
+                                    @Override
+                                    public void onComment() {
+                                        onResponse("Comment Successfull!!!");
+                                    }
+                                });
                             }
                         }
 
@@ -449,11 +449,11 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                         public void onFaild(String message) {
                             onResponse(message);
                         }
-                    });  
+                    });
                 }
             });
             thread.start();
-        }else{
+        } else {
             System.out.println("435 : User Model Null");
         }
     }//GEN-LAST:event_btnCheckActionPerformed
@@ -463,19 +463,19 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
             // TODO add your handling code here:
             String tag = txtSearch.getText().toString().trim();
             onResponse("\n\nSearchinr for : " + tag + ".......................................");
-            
+
             InstagramScraperManager manager = new InstagramScraperManager();
             Account account = manager.getAccountByUsername(tag);
-            
-            onResponse("\nID : "+account.getId()+"\nName : "+account.getFullName()+"\nUser Name : "+account.getUsername()+"\nTotal Followers : "+account.getFollowedBy()+"\nBiography : "+account.getBiography());
-            
+
+            onResponse("\nID : " + account.getId() + "\nName : " + account.getFullName() + "\nUser Name : " + account.getUsername() + "\nTotal Followers : " + account.getFollowedBy() + "\nBiography : " + account.getBiography());
+
         } catch (IOException ex) {
             onResponse(ex.getMessage());
         }
     }//GEN-LAST:event_btnSearchActionPerformed
-    
+
     public static void main(String args[]) {
-        
+
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -492,7 +492,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(MainDashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        
+
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new MainDashboard().setVisible(true);

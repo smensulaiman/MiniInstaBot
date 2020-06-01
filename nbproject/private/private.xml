@@ -3,14 +3,7 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/manager/BrowserController.java</file>
-            <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/network/HttpClient.java</file>
-            <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/manager/WebPageManager.java</file>
-            <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/retrofit/RetrofitClient.java</file>
             <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/gui/MainDashboard.java</file>
-            <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/scraper/InstagramScraperManager.java</file>
-            <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/manager/DriverManager.java</file>
-            <file>file:/C:/Users/Solaiman/Documents/NetBeansProjects/Instagram%20Bot/src/com/miniiinstabot/utils/Constants.java</file>
         </group>
     </open-files>
 </project-private>
