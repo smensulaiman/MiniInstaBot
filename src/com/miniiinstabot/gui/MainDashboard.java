@@ -531,7 +531,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
 
     public void scrapData(int pageNumber) {
         
-        new BrowserController().gotoURL(driver, "https://cep.guiamais.com.br/busca/manaus-am?page="+pageNumber);
+        new BrowserController().gotoURL(driver,"https://cep.guiamais.com.br/busca/manaus-am?page=1");
         
         WebElement table = driver.findElement(By.xpath("/html/body/div[2]/div[6]/div[1]/table"));
         List<WebElement> allRows = table.findElements(By.tagName("tr"));
@@ -542,10 +542,6 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
             for (WebElement cell : cells) {
                 onResponse(cell.getText());
             }
-        }
-        
-        if(Integer.parseInt(txtStreet.getText().toString())>pageNumber){
-            scrapData(pageNumber++);
         }
         
     }
