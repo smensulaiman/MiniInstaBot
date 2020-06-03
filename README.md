@@ -1,1 +1,1 @@
-<h1 style = "color:tomato;">MiniInstaBot</h1>
+<h1 style = "color:#000000;">MiniInstaBot</h1>
