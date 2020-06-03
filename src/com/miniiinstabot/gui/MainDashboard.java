@@ -1,6 +1,6 @@
 package com.miniiinstabot.gui;
 
-import com.miniiinstabot.interfaces.CommentInterface;
+import com.miniiinstabot.database.QueryHelper;
 import com.miniiinstabot.interfaces.LogInInterface;
 import com.miniiinstabot.utils.Constants;
 import com.miniiinstabot.interfaces.ResponseInterface;
@@ -10,25 +10,27 @@ import com.miniiinstabot.manager.WebPageManager;
 import com.miniiinstabot.model.UserAuthModel;
 import com.miniiinstabot.scraper.InstagramScraperManager;
 import com.miniiinstabot.utils.Utils;
+import java.awt.AWTException;
 import java.awt.Color;
-import java.io.File;
+import java.awt.Robot;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.html.HTMLDocument;
 import me.postaddict.instagram.scraper.model.Account;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -40,14 +42,18 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     private Utils utils;
     private WebPageManager webPageManager;
     private Wait<WebDriver> wait;
-
     private List<UserAuthModel> userAuthModels;
 
     public MainDashboard() {
         initComponents();
         initTable();
+
         chkPostComment.setSelected(true);
+        panelMenu.setVisible(false);
+
         utils = new Utils();
+        userAuthModels = new ArrayList<>();
+
         try {
             loadWebDriver();
         } catch (Exception e) {
@@ -59,16 +65,16 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
                 e.getWindow().dispose();
+
+                try {
+                    driver.close();
+                    driver.quit();
+                } catch (Exception ex) {
+                    //ex.printStackTrace();
+                }
+
                 if (firstTimeLogInLoad != null) {
                     firstTimeLogInLoad.stop();
-                }
-                if (driver != null) {
-                    try {
-                        driver.close();
-                        driver.quit();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
                 }
             }
 
@@ -79,6 +85,13 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                         new BrowserController().gotoURL(driver, Constants.BASE_URL_INSTA);
                         if (driver.getTitle().contains(Constants.TITLE_LOGIN)) {
                             onResponse("Log In page loaded....");
+                            try {
+                                Robot robot = new Robot();
+                                //robot.keyPress(Ke);
+                            } catch (AWTException ex) {
+                                ex.printStackTrace();
+                            }
+
                             firstTimeLogInLoad.stop();
                         }
                     }
@@ -97,21 +110,23 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         tableHeader.setForeground(Color.decode("#4CAF50"));
 
         tableModel = (DefaultTableModel) tableUsers.getModel();
-        tableModel.setColumnCount(3);
+        tableModel.setColumnCount(4);
 
         tableUsers.getColumnModel().getColumn(0).setHeaderValue("USERID");
         tableUsers.getColumnModel().getColumn(1).setHeaderValue("PASSWORD");
-        tableUsers.getColumnModel().getColumn(2).setHeaderValue("STATUS");
+        tableUsers.getColumnModel().getColumn(2).setHeaderValue("PROCESS");
+        tableUsers.getColumnModel().getColumn(3).setHeaderValue("RESULT");
 
         txtResult.append("Loaded Successfully\n");
     }
 
     public void loadWebDriver() throws InterruptedException {
-        System.setProperty("webdriver.chrome.driver", "driver\\chromedriver.exe");
+        //System.setProperty("webdriver.chrome.driver", "driver\\chromedriver.exe");
+        System.setProperty("webdriver.gecko.driver", "driver\\geckodriver.exe");
         DriverManager driverManager = new DriverManager();
         driverManager.setDriverInterface(this);
 
-        driver = driverManager.getChromeDriver();
+        driver = driverManager.getFirefoxDriver();
         driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
         wait = new WebDriverWait(driver, 5);
 
@@ -135,39 +150,38 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         jTextField1 = new javax.swing.JTextField();
         jTextField2 = new javax.swing.JTextField();
         jCheckBox2 = new javax.swing.JCheckBox();
-        jTextField3 = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
-        jButton2 = new javax.swing.JButton();
-        jTabbedPane3 = new javax.swing.JTabbedPane();
+        txtPassword = new javax.swing.JTextField();
+        txtUsername = new javax.swing.JTextField();
+        btnEnter = new javax.swing.JButton();
+        tabbedPanel = new javax.swing.JTabbedPane();
+        tabOnePannel = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tableUsers = new javax.swing.JTable();
+        txtDirectUrl = new javax.swing.JTextField();
+        txtLogInStatus = new javax.swing.JLabel();
+        panelMenu = new javax.swing.JPanel();
+        btnRefresh = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        btnPlay = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        btnStop = new javax.swing.JButton();
+        tabTwoPannel = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         txtSearch = new javax.swing.JTextField();
         btnSearch = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tableUsers = new javax.swing.JTable();
+        txtStreet = new javax.swing.JTextField();
+        btnScrap = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtResult = new javax.swing.JTextArea();
-        jPanel4 = new javax.swing.JPanel();
-        txtAuth = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        txtUrl = new javax.swing.JTextField();
-        jLabel6 = new javax.swing.JLabel();
-        txtComment = new javax.swing.JTextField();
-        btnComment = new javax.swing.JButton();
-        btnAuth = new javax.swing.JButton();
-        btnUrl = new javax.swing.JButton();
-        btnCheck = new javax.swing.JButton();
-        btnLoad = new javax.swing.JButton();
-        btnStart = new javax.swing.JButton();
-        txtDirectUrl = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("INSTAGRAM AUTO COMMENT BOT v1.0");
         setResizable(false);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.setBackground(new java.awt.Color(0, 204, 204));
+        jPanel1.setBackground(new java.awt.Color(255, 102, 102));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel1.setFont(new java.awt.Font("Cambria", 1, 24)); // NOI18N
@@ -208,7 +222,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         jLabel3.setBackground(new java.awt.Color(102, 102, 102));
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setText("Copyright : MiniideA");
-        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 564, 150, 20));
+        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 570, 150, 20));
 
         jTextField1.setForeground(new java.awt.Color(153, 153, 153));
         jTextField1.setText("Proxy");
@@ -221,42 +235,50 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         jCheckBox2.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
         jCheckBox2.setForeground(new java.awt.Color(255, 255, 255));
         jCheckBox2.setText("Enable Proxy");
-        jPanel1.add(jCheckBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 150, -1, -1));
+        jPanel1.add(jCheckBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
 
-        jTextField3.setText("password");
-        jTextField3.setEnabled(false);
-        jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 72, 161, -1));
-
-        jTextField4.setText("username");
-        jTextField4.setEnabled(false);
-        jPanel1.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 46, 161, -1));
-
-        jButton2.setBackground(new java.awt.Color(255, 255, 255));
-        jButton2.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
-        jButton2.setForeground(new java.awt.Color(0, 204, 51));
-        jButton2.setText("Enter");
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, 160, -1));
-
-        jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-        jPanel2.add(txtSearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, 150, 30));
-
-        btnSearch.setText("SEARCH");
-        btnSearch.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSearchActionPerformed(evt);
+        txtPassword.setForeground(new java.awt.Color(102, 102, 102));
+        txtPassword.setText("enter password");
+        txtPassword.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtPasswordFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtPasswordFocusLost(evt);
             }
         });
-        jPanel2.add(btnSearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 150, 30));
+        jPanel1.add(txtPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 72, 161, -1));
 
-        jTabbedPane3.addTab("tab1", jPanel2);
-        jTabbedPane3.addTab("tab2", jPanel3);
+        txtUsername.setForeground(new java.awt.Color(102, 102, 102));
+        txtUsername.setText("enter username");
+        txtUsername.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtUsernameFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtUsernameFocusLost(evt);
+            }
+        });
+        jPanel1.add(txtUsername, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 46, 161, -1));
 
-        jPanel1.add(jTabbedPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 380, 180, 150));
-        jTabbedPane3.getAccessibleContext().setAccessibleName("Search");
+        btnEnter.setBackground(new java.awt.Color(255, 255, 255));
+        btnEnter.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
+        btnEnter.setForeground(new java.awt.Color(0, 204, 51));
+        btnEnter.setText("Enter");
+        btnEnter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEnterActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnEnter, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 100, 160, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, 600));
 
-        tableUsers.setBackground(new java.awt.Color(255, 255, 204));
+        tabbedPanel.setBackground(new java.awt.Color(0, 204, 255));
+
+        tabOnePannel.setBackground(new java.awt.Color(255, 255, 255));
+        tabOnePannel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
         tableUsers.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -278,7 +300,98 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         ));
         jScrollPane1.setViewportView(tableUsers);
 
-        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 130, 650, 220));
+        tabOnePannel.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 120, 650, 220));
+
+        txtDirectUrl.setFont(new java.awt.Font("Times New Roman", 0, 14)); // NOI18N
+        txtDirectUrl.setForeground(new java.awt.Color(153, 153, 153));
+        txtDirectUrl.setText("https://www.instagram.com/tv/CAoPI_ZHeEp/?utm_source=ig_web_copy_link");
+        tabOnePannel.add(txtDirectUrl, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 650, -1));
+
+        txtLogInStatus.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
+        txtLogInStatus.setForeground(new java.awt.Color(255, 51, 51));
+        txtLogInStatus.setText("Not Connected");
+        tabOnePannel.add(txtLogInStatus, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 60, -1, -1));
+
+        panelMenu.setBackground(new java.awt.Color(255, 255, 255));
+        panelMenu.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        btnRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/refresh.png"))); // NOI18N
+        btnRefresh.setBorder(null);
+        btnRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRefreshActionPerformed(evt);
+            }
+        });
+        panelMenu.add(btnRefresh, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 100, 70));
+
+        jLabel4.setFont(new java.awt.Font("Times New Roman", 1, 11)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(0, 204, 153));
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel4.setText("REFRESH");
+        panelMenu.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 100, 20));
+
+        btnPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/play.png"))); // NOI18N
+        btnPlay.setBorder(null);
+        btnPlay.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPlayActionPerformed(evt);
+            }
+        });
+        panelMenu.add(btnPlay, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 10, 100, 70));
+
+        jLabel5.setFont(new java.awt.Font("Times New Roman", 1, 11)); // NOI18N
+        jLabel5.setForeground(new java.awt.Color(0, 204, 153));
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel5.setText("START");
+        panelMenu.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 80, 100, 20));
+
+        jLabel6.setFont(new java.awt.Font("Times New Roman", 1, 11)); // NOI18N
+        jLabel6.setForeground(new java.awt.Color(0, 204, 153));
+        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel6.setText("STOP");
+        panelMenu.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 80, 100, 20));
+
+        btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/stop.png"))); // NOI18N
+        btnStop.setBorder(null);
+        panelMenu.add(btnStop, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 10, 100, 70));
+
+        tabOnePannel.add(panelMenu, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 20, 650, 100));
+
+        tabbedPanel.addTab("Dashboard", tabOnePannel);
+
+        tabTwoPannel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        jPanel2.add(txtSearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, 150, 30));
+
+        btnSearch.setText("SEARCH");
+        btnSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSearchActionPerformed(evt);
+            }
+        });
+        jPanel2.add(btnSearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 150, 30));
+
+        tabTwoPannel.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 175, 122));
+
+        jPanel3.setBackground(new java.awt.Color(0, 204, 255));
+        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        jPanel3.add(txtStreet, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, 150, 30));
+
+        btnScrap.setText("SCRAP");
+        btnScrap.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnScrapActionPerformed(evt);
+            }
+        });
+        jPanel3.add(btnScrap, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 150, 30));
+
+        tabTwoPannel.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 0, 170, 120));
+
+        tabbedPanel.addTab("Scrapper", tabTwoPannel);
+
+        getContentPane().add(tabbedPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 0, 650, 370));
 
         txtResult.setBackground(new java.awt.Color(102, 102, 102));
         txtResult.setColumns(20);
@@ -288,175 +401,11 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         jScrollPane2.setViewportView(txtResult);
         txtResult.getAccessibleContext().setAccessibleName("");
 
-        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 350, 650, 250));
-
-        jPanel4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        txtAuth.setForeground(new java.awt.Color(153, 153, 153));
-        txtAuth.setText("C:\\Users\\Solaiman\\Desktop\\New folder\\input.txt");
-        jPanel4.add(txtAuth, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 0, 440, 30));
-
-        jLabel4.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(0, 153, 102));
-        jLabel4.setText("Instagram Auth : ");
-        jPanel4.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 3, -1, 30));
-
-        jLabel5.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
-        jLabel5.setForeground(new java.awt.Color(0, 153, 102));
-        jLabel5.setText("Post Url : ");
-        jPanel4.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, -1, 30));
-
-        txtUrl.setForeground(new java.awt.Color(153, 153, 153));
-        txtUrl.setText("User and Password Path");
-        jPanel4.add(txtUrl, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 30, 440, 30));
-
-        jLabel6.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
-        jLabel6.setForeground(new java.awt.Color(0, 153, 102));
-        jLabel6.setText("Comment Path :");
-        jPanel4.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, -1, 30));
-
-        txtComment.setForeground(new java.awt.Color(153, 153, 153));
-        txtComment.setText("User and Password Path");
-        jPanel4.add(txtComment, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 60, 440, 30));
-
-        btnComment.setText("jButton3");
-        jPanel4.add(btnComment, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 60, 20, 30));
-
-        btnAuth.setText("jButton3");
-        btnAuth.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAuthActionPerformed(evt);
-            }
-        });
-        jPanel4.add(btnAuth, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 0, 20, 30));
-
-        btnUrl.setText("jButton3");
-        jPanel4.add(btnUrl, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 30, 20, 30));
-
-        btnCheck.setBackground(new java.awt.Color(0, 153, 153));
-        btnCheck.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
-        btnCheck.setForeground(new java.awt.Color(255, 255, 255));
-        btnCheck.setText("CHECK");
-        btnCheck.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCheckActionPerformed(evt);
-            }
-        });
-        jPanel4.add(btnCheck, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 30, 80, 30));
-
-        btnLoad.setBackground(new java.awt.Color(255, 102, 102));
-        btnLoad.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
-        btnLoad.setForeground(new java.awt.Color(255, 255, 255));
-        btnLoad.setText("LOAD");
-        btnLoad.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLoadActionPerformed(evt);
-            }
-        });
-        jPanel4.add(btnLoad, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 0, 80, 30));
-
-        btnStart.setBackground(new java.awt.Color(0, 153, 102));
-        btnStart.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
-        btnStart.setForeground(new java.awt.Color(255, 255, 255));
-        btnStart.setText("START");
-        btnStart.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnStartActionPerformed(evt);
-            }
-        });
-        jPanel4.add(btnStart, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 60, 80, 30));
-
-        getContentPane().add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(177, 29, 650, -1));
-
-        txtDirectUrl.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
-        txtDirectUrl.setForeground(new java.awt.Color(153, 153, 153));
-        txtDirectUrl.setText("https://www.instagram.com/tv/CAoPI_ZHeEp/?utm_source=ig_web_copy_link");
-        getContentPane().add(txtDirectUrl, new org.netbeans.lib.awtextra.AbsoluteConstraints(277, 0, 440, -1));
+        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 370, 650, 230));
 
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void btnStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStartActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btnStartActionPerformed
-
-    private void btnAuthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAuthActionPerformed
-        // TODO add your handling code here:
-        JFileChooser fileChooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
-        fileChooser.setFileFilter(filter);
-        int returnVal = fileChooser.showOpenDialog(MainDashboard.this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            txtAuth.setText(file.getAbsolutePath());
-        }
-    }//GEN-LAST:event_btnAuthActionPerformed
-
-    private void btnLoadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoadActionPerformed
-        // TODO add your handling code here:
-        if (txtAuth.getText().toString().trim() != null) {
-            try {
-                File file = new File(txtAuth.getText().toString().trim());
-                userAuthModels = utils.getUserAuthList(Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
-
-                if (userAuthModels != null) {
-                    if (userAuthModels.size() > 0) {
-                        txtResult.append("\n" + Constants.STAR);
-                        txtResult.append("\n" + userAuthModels.size() + " User(s) Found");
-                        txtResult.append("\n" + Constants.STAR + "\n");
-
-                        int index = 1;
-                        tableModel.setRowCount(0);
-                        for (UserAuthModel userAuthModel : userAuthModels) {
-                            txtResult.append("\nFor User :" + index + "\nID : " + userAuthModel.getEmail() + "\nPassword : " + userAuthModel.getPassword() + "\n");
-                            tableModel.addRow(new Object[]{userAuthModel.getEmail(), userAuthModel.getPassword(), "Enque"});
-                            index++;
-                        }
-                    }
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }//GEN-LAST:event_btnLoadActionPerformed
-
-    private void btnCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckActionPerformed
-        // TODO add your handling code here:
-        if (userAuthModels != null) {
-            System.out.println("424 Entering Thread");
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    webPageManager = new WebPageManager();
-                    webPageManager.logInSingleUser(driver, userAuthModels.get(0), new LogInInterface() {
-                        @Override
-                        public void onSuccess() {
-                            onResponse("LogIn Success");
-
-                            if (!txtDirectUrl.getText().toString().trim().equals("")) {
-                                webPageManager.gotToPostLink(driver, txtDirectUrl.getText().toString().trim());
-                                webPageManager.makeComment(driver, "Thats Great", new CommentInterface() {
-                                    @Override
-                                    public void onComment() {
-                                        onResponse("Comment Successfull!!!");
-                                    }
-                                });
-                            }
-                        }
-
-                        @Override
-                        public void onFaild(String message) {
-                            onResponse(message);
-                        }
-                    });
-                }
-            });
-            thread.start();
-        } else {
-            System.out.println("435 : User Model Null");
-        }
-    }//GEN-LAST:event_btnCheckActionPerformed
 
     private void btnSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSearchActionPerformed
         try {
@@ -467,12 +416,139 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
             InstagramScraperManager manager = new InstagramScraperManager();
             Account account = manager.getAccountByUsername(tag);
 
-            onResponse("\nID : " + account.getId() + "\nName : " + account.getFullName() + "\nUser Name : " + account.getUsername() + "\nTotal Followers : " + account.getFollowedBy() + "\nBiography : " + account.getBiography());
+            onResponse("\nID : " + account.getId()
+                    + "\nName : " + account.getFullName()
+                    + "\nUser Name : " + account.getUsername()
+                    + "\nTotal Followers : " + account.getFollowedBy()
+                    + "\nBiography : " + account.getBiography());
 
         } catch (IOException ex) {
             onResponse(ex.getMessage());
         }
     }//GEN-LAST:event_btnSearchActionPerformed
+
+    private void btnEnterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEnterActionPerformed
+        // TODO add your handling code here:
+        if (txtUsername.getText().trim().toLowerCase().equals("admin")) {
+            if (txtPassword.getText().trim().toLowerCase().equals("admin")) {
+                txtLogInStatus.setVisible(false);
+                panelMenu.setVisible(true);
+            } else {
+                onResponse("Incorrect Password!!!");
+            }
+        } else {
+            onResponse("Incorrect Username!!!");
+        }
+    }//GEN-LAST:event_btnEnterActionPerformed
+
+    private void txtUsernameFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtUsernameFocusLost
+        // TODO add your handling code here:
+        if (txtUsername.getText().toString().trim().equals("")) {
+            txtUsername.setText("enter username");
+        }
+    }//GEN-LAST:event_txtUsernameFocusLost
+
+    private void txtPasswordFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPasswordFocusLost
+        // TODO add your handling code here:
+        if (txtPassword.getText().toString().trim().equals("")) {
+            txtPassword.setText("enter password");
+        }
+    }//GEN-LAST:event_txtPasswordFocusLost
+
+    private void txtUsernameFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtUsernameFocusGained
+        // TODO add your handling code here:
+        if (txtUsername.getText().toString().trim().equals("enter username")) {
+            txtUsername.setText("");
+        }
+    }//GEN-LAST:event_txtUsernameFocusGained
+
+    private void txtPasswordFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPasswordFocusGained
+        // TODO add your handling code here:
+        if (txtPassword.getText().toString().trim().equals("enter password")) {
+            txtPassword.setText("");
+        }
+    }//GEN-LAST:event_txtPasswordFocusGained
+
+    private void btnRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshActionPerformed
+        // TODO add your handling code here:
+        onResponse("Connecting to databse...");
+        tableModel.setRowCount(0);
+
+        userAuthModels.clear();
+
+        QueryHelper queryHelper = new QueryHelper();
+
+        if (queryHelper.getAllUsers(userAuthModels)) {
+
+            Iterator<UserAuthModel> it = userAuthModels.iterator();
+            UserAuthModel model;
+            while (it.hasNext()) {
+                model = it.next();
+                tableModel.addRow(new Object[]{model.getEmail(), model.getPassword(), "Enque"});
+                onResponse(model.getEmail());
+            }
+
+        } else {
+            onResponse("No User Found...");
+        }
+
+    }//GEN-LAST:event_btnRefreshActionPerformed
+
+    private void btnPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPlayActionPerformed
+        // TODO add your handling code here:
+        onResponse("Started................");
+
+        try {
+
+            if (userAuthModels != null) {
+                if (userAuthModels.size() > 0) {
+                    webPageManager = new WebPageManager();
+                    webPageManager.logInSingleUser(driver, userAuthModels.get(0), new LogInInterface() {
+                        @Override
+                        public void onSuccess() {
+                            onResponse("Success!!!");
+                        }
+
+                        @Override
+                        public void onFaild(String message) {
+                            onResponse(message);
+                        }
+                    });
+                }
+            }
+
+        } catch (Exception e) {
+            onResponse(e.getMessage());
+            e.printStackTrace();
+        }
+
+    }//GEN-LAST:event_btnPlayActionPerformed
+
+    private void btnScrapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScrapActionPerformed
+        // TODO add your handling code here:
+        scrapData(1);
+    }//GEN-LAST:event_btnScrapActionPerformed
+
+    public void scrapData(int pageNumber) {
+        
+        new BrowserController().gotoURL(driver, "https://cep.guiamais.com.br/busca/manaus-am?page="+pageNumber);
+        
+        WebElement table = driver.findElement(By.xpath("/html/body/div[2]/div[6]/div[1]/table"));
+        List<WebElement> allRows = table.findElements(By.tagName("tr"));
+
+        for (WebElement row : allRows) {
+            List<WebElement> cells = row.findElements(By.tagName("td"));
+
+            for (WebElement cell : cells) {
+                onResponse(cell.getText());
+            }
+        }
+        
+        if(Integer.parseInt(txtStreet.getText().toString())>pageNumber){
+            scrapData(pageNumber++);
+        }
+        
+    }
 
     public static void main(String args[]) {
 
@@ -501,15 +577,13 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnAuth;
-    private javax.swing.JButton btnCheck;
-    private javax.swing.JButton btnComment;
-    private javax.swing.JButton btnLoad;
+    private javax.swing.JButton btnEnter;
+    private javax.swing.JButton btnPlay;
+    private javax.swing.JButton btnRefresh;
+    private javax.swing.JButton btnScrap;
     private javax.swing.JButton btnSearch;
-    private javax.swing.JButton btnStart;
-    private javax.swing.JButton btnUrl;
+    private javax.swing.JButton btnStop;
     private javax.swing.JCheckBox chkPostComment;
-    private javax.swing.JButton jButton2;
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JCheckBox jCheckBox3;
@@ -523,23 +597,24 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JTabbedPane jTabbedPane3;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
+    private javax.swing.JPanel panelMenu;
+    private javax.swing.JPanel tabOnePannel;
+    private javax.swing.JPanel tabTwoPannel;
+    private javax.swing.JTabbedPane tabbedPanel;
     private javax.swing.JTable tableUsers;
-    private javax.swing.JTextField txtAuth;
-    private javax.swing.JTextField txtComment;
     private javax.swing.JTextField txtDirectUrl;
+    private javax.swing.JLabel txtLogInStatus;
+    private javax.swing.JTextField txtPassword;
     private javax.swing.JTextArea txtResult;
     private javax.swing.JTextField txtSearch;
-    private javax.swing.JTextField txtUrl;
+    private javax.swing.JTextField txtStreet;
+    private javax.swing.JTextField txtUsername;
     // End of variables declaration//GEN-END:variables
 
     @Override
