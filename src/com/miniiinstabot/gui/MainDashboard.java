@@ -13,12 +13,17 @@ import com.miniiinstabot.utils.Utils;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Robot;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +33,10 @@ import javax.swing.table.JTableHeader;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTMLDocument;
 import me.postaddict.instagram.scraper.model.Account;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -524,26 +533,92 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
 
     }//GEN-LAST:event_btnPlayActionPerformed
 
+    Thread scrapThread;
+    XSSFWorkbook workbook;
+    XSSFSheet spreadsheet;
+    FileOutputStream out;
+
     private void btnScrapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScrapActionPerformed
         // TODO add your handling code here:
-        scrapData(1);
+        scrapThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    workbook = new XSSFWorkbook();
+                    spreadsheet = workbook.createSheet("Address");
+                    spreadsheet.setColumnWidth(0, 8000);
+                    spreadsheet.setColumnWidth(1, 8000);
+                    spreadsheet.setColumnWidth(2, 8000);
+                    //This data needs to be written (Object[])
+                    empinfo = new TreeMap< String, Object[]>();
+                    out = new FileOutputStream(new File("createBlankWorkBook.xlsx"));
+                    
+                    
+                    scrapData(1, Integer.parseInt(String.valueOf(txtStreet.getText())));
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        scrapThread.start();
     }//GEN-LAST:event_btnScrapActionPerformed
 
-    public void scrapData(int pageNumber) {
-        
-        new BrowserController().gotoURL(driver,"https://cep.guiamais.com.br/busca/manaus-am?page=1");
-        
-        WebElement table = driver.findElement(By.xpath("/html/body/div[2]/div[6]/div[1]/table"));
-        List<WebElement> allRows = table.findElements(By.tagName("tr"));
+    //Create row object
+    XSSFRow row;
+    Map< String, Object[]> empinfo;
+    int rowIndex = 1;
 
-        for (WebElement row : allRows) {
-            List<WebElement> cells = row.findElements(By.tagName("td"));
+    public void scrapData(int from, int to) {
+        if (to >= from) {
+            new BrowserController().gotoURL(driver, "https://cep.guiamais.com.br/busca/manaus-am?page=" + from);
 
-            for (WebElement cell : cells) {
-                onResponse(cell.getText());
+            WebElement table = driver.findElement(By.xpath("/html/body/div[2]/div[6]/div[1]/table"));
+            List<WebElement> allRows = table.findElements(By.tagName("tr"));
+
+            for (int i = 1; i < allRows.size(); i++) {
+
+                final String LOGRADOURO = driver.findElement(By.xpath("/html/body/div[2]/div[6]/div[1]/table/tbody/tr[" + i + "]/td[1]")).getText();
+                final String BAIRRO = driver.findElement(By.xpath("/html/body/div[2]/div[6]/div[1]/table/tbody/tr[" + i + "]/td[2]")).getText();
+                final String CEP = driver.findElement(By.xpath("/html/body/div[2]/div[6]/div[1]/table/tbody/tr[" + i + "]/td[5]")).getText();
+
+                empinfo.put(String.valueOf(rowIndex), new Object[]{LOGRADOURO, BAIRRO, CEP});
+                rowIndex++;
+                //System.out.println(LOGRADOURO + "\t" + BAIRRO + "\t" + CEP);
+            }
+
+            from++;
+            scrapData(from, to);
+
+        } else {
+            try {
+
+                Set< String> keyid = empinfo.keySet();
+                int rowid = 0;
+
+                for (String key : keyid) {
+                    row = spreadsheet.createRow(rowid++);
+                    row.setHeight((short) 600);
+                    Object[] objectArr = empinfo.get(key);
+                    int cellid = 0;
+
+                    for (Object obj : objectArr) {
+                        Cell cell = row.createCell(cellid++);
+                        cell.setCellValue((String) obj);
+                    }
+                }
+
+                workbook.write(out);
+                out.close();
+                System.out.println("createworkbook.xlsx written successfully");
+                if (scrapThread.isAlive()) {
+                    scrapThread.stop();
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         }
-        
+
     }
 
     public static void main(String args[]) {
