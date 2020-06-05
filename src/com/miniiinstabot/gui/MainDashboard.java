@@ -112,6 +112,19 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
     }
 
+    public void loadWebDriver() throws InterruptedException {
+        //System.setProperty("webdriver.chrome.driver", "driver\\chromedriver.exe");
+        System.setProperty("webdriver.gecko.driver", "driver\\geckodriver.exe");
+        DriverManager driverManager = new DriverManager();
+        driverManager.setDriverInterface(this);
+
+        driver = driverManager.getFirefoxDriver();
+        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+        wait = new WebDriverWait(driver, 5);
+
+        onResponse("Redirecting to Instagram login :" + Constants.BASE_URL_INSTA);
+    }
+
     public void initTable() {
         txtResult.append("\nPreparing header\n");
 
@@ -127,19 +140,6 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         tableUsers.getColumnModel().getColumn(3).setHeaderValue("RESULT");
 
         txtResult.append("Loaded Successfully\n");
-    }
-
-    public void loadWebDriver() throws InterruptedException {
-        //System.setProperty("webdriver.chrome.driver", "driver\\chromedriver.exe");
-        System.setProperty("webdriver.gecko.driver", "driver\\geckodriver.exe");
-        DriverManager driverManager = new DriverManager();
-        driverManager.setDriverInterface(this);
-
-        driver = driverManager.getFirefoxDriver();
-        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
-        wait = new WebDriverWait(driver, 5);
-
-        onResponse("Redirecting to Instagram login :" + Constants.BASE_URL_INSTA);
     }
 
     @SuppressWarnings("unchecked")
@@ -530,13 +530,12 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
             onResponse(e.getMessage());
             e.printStackTrace();
         }
-
     }//GEN-LAST:event_btnPlayActionPerformed
 
-    Thread scrapThread;
-    XSSFWorkbook workbook;
-    XSSFSheet spreadsheet;
-    FileOutputStream out;
+    private Thread scrapThread;
+    private XSSFWorkbook workbook;
+    private XSSFSheet spreadsheet;
+    private FileOutputStream out;
 
     private void btnScrapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScrapActionPerformed
         // TODO add your handling code here:
@@ -552,10 +551,9 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                     //This data needs to be written (Object[])
                     empinfo = new TreeMap< String, Object[]>();
                     out = new FileOutputStream(new File("createBlankWorkBook.xlsx"));
-                    
-                    
+
                     scrapData(1, Integer.parseInt(String.valueOf(txtStreet.getText())));
-                    
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -630,13 +628,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainDashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainDashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainDashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(MainDashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
 

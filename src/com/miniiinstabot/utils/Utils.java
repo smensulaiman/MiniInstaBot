@@ -61,7 +61,7 @@ public class Utils {
             WebElement searchButton = wait.until(
                     visibilityOfElementLocated(by));
             return true;
-        } catch (org.openqa.selenium.NoSuchElementException e) {
+        } catch (Exception e) {
             return false;
         }
     }

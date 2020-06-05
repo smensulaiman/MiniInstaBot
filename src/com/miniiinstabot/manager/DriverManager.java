@@ -22,6 +22,7 @@ public class DriverManager{
 
     public DriverManager() {
         FirefoxProfile firefoxProfile = new FirefoxProfile();
+        firefoxProfile.setPreference("permissions.default.image", 2);
         firefoxProfile.addExtension(new File("addons\\multifox.xpi"));
         
         FirefoxOptions opt = new FirefoxOptions();
