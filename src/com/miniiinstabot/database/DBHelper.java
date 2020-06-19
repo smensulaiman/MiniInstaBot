@@ -8,7 +8,7 @@ public class DBHelper {
     public static Connection conn;
     public static Connection getConnection() {
         try {
-            String url = "jdbc:mysql://localhost:3306/tvnafesta";
+            String url = "jdbc:mysql://localhost:3306/zipcode";
             String user = "root";
             String pass = "";
             Class.forName("com.mysql.jdbc.Driver");

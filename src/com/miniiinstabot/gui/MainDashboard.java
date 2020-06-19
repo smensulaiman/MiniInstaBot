@@ -1,5 +1,6 @@
 package com.miniiinstabot.gui;
 
+import com.google.gson.Gson;
 import com.miniiinstabot.database.QueryHelper;
 import com.miniiinstabot.interfaces.LogInInterface;
 import com.miniiinstabot.utils.Constants;
@@ -8,17 +9,21 @@ import com.miniiinstabot.manager.BrowserController;
 import com.miniiinstabot.manager.DriverManager;
 import com.miniiinstabot.manager.WebPageManager;
 import com.miniiinstabot.model.UserAuthModel;
+import com.miniiinstabot.retrofit.APIInterface;
+import com.miniiinstabot.retrofit.RetrofitClient;
 import com.miniiinstabot.scraper.InstagramScraperManager;
 import com.miniiinstabot.utils.Utils;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Robot;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -31,17 +36,21 @@ import javax.swing.JFrame;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.text.DefaultCaret;
-import javax.swing.text.html.HTMLDocument;
 import me.postaddict.instagram.scraper.model.Account;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainDashboard extends javax.swing.JFrame implements ResponseInterface {
 
@@ -235,16 +244,16 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
 
         jTextField1.setForeground(new java.awt.Color(153, 153, 153));
         jTextField1.setText("Proxy");
-        jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 180, 97, 30));
+        jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, 97, 20));
 
         jTextField2.setForeground(new java.awt.Color(153, 153, 153));
         jTextField2.setText("Port");
-        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 180, 58, 30));
+        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 190, 58, 20));
 
         jCheckBox2.setFont(new java.awt.Font("Times New Roman", 1, 12)); // NOI18N
         jCheckBox2.setForeground(new java.awt.Color(255, 255, 255));
         jCheckBox2.setText("Enable Proxy");
-        jPanel1.add(jCheckBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
+        jPanel1.add(jCheckBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, 160, -1));
 
         txtPassword.setForeground(new java.awt.Color(102, 102, 102));
         txtPassword.setText("enter password");
@@ -309,12 +318,12 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         ));
         jScrollPane1.setViewportView(tableUsers);
 
-        tabOnePannel.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 120, 650, 220));
+        tabOnePannel.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 620, 220));
 
         txtDirectUrl.setFont(new java.awt.Font("Times New Roman", 0, 14)); // NOI18N
         txtDirectUrl.setForeground(new java.awt.Color(153, 153, 153));
         txtDirectUrl.setText("https://www.instagram.com/tv/CAoPI_ZHeEp/?utm_source=ig_web_copy_link");
-        tabOnePannel.add(txtDirectUrl, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 650, -1));
+        tabOnePannel.add(txtDirectUrl, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 630, -1));
 
         txtLogInStatus.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
         txtLogInStatus.setForeground(new java.awt.Color(255, 51, 51));
@@ -364,10 +373,11 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         btnStop.setBorder(null);
         panelMenu.add(btnStop, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 10, 100, 70));
 
-        tabOnePannel.add(panelMenu, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 20, 650, 100));
+        tabOnePannel.add(panelMenu, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 20, 630, 100));
 
         tabbedPanel.addTab("Dashboard", tabOnePannel);
 
+        tabTwoPannel.setBackground(new java.awt.Color(255, 255, 255));
         tabTwoPannel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
@@ -382,9 +392,9 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         });
         jPanel2.add(btnSearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 150, 30));
 
-        tabTwoPannel.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 175, 122));
+        tabTwoPannel.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 175, 100));
 
-        jPanel3.setBackground(new java.awt.Color(0, 204, 255));
+        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
         jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
         jPanel3.add(txtStreet, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, 150, 30));
 
@@ -396,11 +406,11 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         });
         jPanel3.add(btnScrap, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 150, 30));
 
-        tabTwoPannel.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 0, 170, 120));
+        tabTwoPannel.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 100, 170, 100));
 
         tabbedPanel.addTab("Scrapper", tabTwoPannel);
 
-        getContentPane().add(tabbedPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 0, 650, 370));
+        getContentPane().add(tabbedPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 0, 640, 370));
 
         txtResult.setBackground(new java.awt.Color(102, 102, 102));
         txtResult.setColumns(20);
@@ -410,7 +420,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
         jScrollPane2.setViewportView(txtResult);
         txtResult.getAccessibleContext().setAccessibleName("");
 
-        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 370, 650, 230));
+        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 370, 640, 230));
 
         pack();
         setLocationRelativeTo(null);
@@ -552,7 +562,7 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
                     empinfo = new TreeMap< String, Object[]>();
                     out = new FileOutputStream(new File("createBlankWorkBook.xlsx"));
 
-                    scrapData(1, Integer.parseInt(String.valueOf(txtStreet.getText())));
+                    scrapData(1, Integer.parseInt("2"));
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -617,6 +627,55 @@ public class MainDashboard extends javax.swing.JFrame implements ResponseInterfa
             }
         }
 
+    }
+
+    public void generateExcel(File[] files) {
+        try {
+
+            onResponse("Start");
+
+            workbook = new XSSFWorkbook();
+            spreadsheet = workbook.createSheet("Dat Files");
+            spreadsheet.setColumnWidth(0, 3000);
+            empinfo = new TreeMap< String, Object[]>();
+            out = new FileOutputStream(new File("Saiful.xlsx"));
+
+            empinfo.put(String.valueOf(rowIndex), new Object[]{"name"});
+            rowIndex++;
+
+            for (File file : files) {
+                empinfo.put(String.valueOf(rowIndex), new Object[]{file.getName().split(".dat")[0]});
+                rowIndex++;
+            }
+
+            try {
+
+                Set< String> keyid = empinfo.keySet();
+                int rowid = 0;
+
+                for (String key : keyid) {
+                    row = spreadsheet.createRow(rowid++);
+                    row.setHeight((short) 300);
+                    Object[] objectArr = empinfo.get(key);
+                    int cellid = 0;
+
+                    for (Object obj : objectArr) {
+                        Cell cell = row.createCell(cellid++);
+                        cell.setCellValue((String) obj);
+                    }
+                }
+
+                workbook.write(out);
+                out.close();
+                onResponse("Excel written successfully");
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MainDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public static void main(String args[]) {

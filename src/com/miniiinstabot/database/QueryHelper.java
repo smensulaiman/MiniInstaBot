@@ -64,6 +64,41 @@ public class QueryHelper {
         return 0;
     }
 
+    public int insertZip(String A, String B, String C, String D, String E, String zipCode, String zipAddress) {
+
+        try {
+
+            pst = dbConnection().prepareStatement(QueryConstant.INSERT_NEW_DATA);
+            pst.setString(1, A);
+            pst.setString(2, B);
+            pst.setString(3, C);
+            pst.setString(4, D);
+            pst.setString(5, E);
+            pst.setString(6, zipCode);
+            pst.setString(7, zipAddress);
+
+            int a = pst.executeUpdate();
+
+            if (a > 0) {
+                pst.close();
+                System.out.println("Data Inserted Successfully");
+                return 1;
+            } else {
+                pst.close();
+                System.out.println("Faild");
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            if (ex.getMessage().contains("Duplicate entry")) {
+                System.out.println("error : " + ex.getMessage());
+                return 2;
+            }
+        }
+
+        return 0;
+    }
+
     public String logInUser(String email, String password) {
 
         try {
@@ -95,23 +130,23 @@ public class QueryHelper {
     }
 
     public boolean getAllUsers(List<UserAuthModel> users) {
-            
-            try{                
-                pst = dbConnection().prepareStatement(QueryConstant.SELECT_USER);
-                rs = pst.executeQuery();           
-                while(rs.next()){
-                    users.add(new UserAuthModel(rs.getString("login").trim(), rs.getString("senha").trim()));
-                }  
-                
-                pst.close();
-                rs.close();
-                
-                return true;
-                
-            }catch(Exception e){
-                e.printStackTrace();
+
+        try {
+            pst = dbConnection().prepareStatement(QueryConstant.SELECT_USER);
+            rs = pst.executeQuery();
+            while (rs.next()) {
+                users.add(new UserAuthModel(rs.getString("login").trim(), rs.getString("senha").trim()));
             }
-        
+
+            pst.close();
+            rs.close();
+
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return false;
     }
 }

@@ -1,8 +1,12 @@
 package com.miniiinstabot.utils;
 
 import com.miniiinstabot.model.UserAuthModel;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -12,6 +16,15 @@ import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElem
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class Utils {
+
+    public static String imageToBase(String path) throws IOException {
+        String filePath = path;
+
+        byte[] fileContent = FileUtils.readFileToByteArray(new File(filePath));
+        String encodedString = Base64.getEncoder().encodeToString(fileContent);
+
+        return "data:image/png;base64,"+encodedString;
+    }
 
     public List<UserAuthModel> getUserAuthList(List<String> txt) {
 

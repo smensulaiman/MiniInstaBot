@@ -1,5 +1,6 @@
 package com.miniiinstabot.scraper;
 
+import com.miniiinstabot.database.QueryHelper;
 import com.miniiinstabot.interfaces.ResponseInterface;
 import com.miniiinstabot.manager.BrowserController;
 import com.miniiinstabot.manager.DriverManager;
@@ -17,8 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -28,10 +27,11 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class ZipCodeScrapper {
@@ -41,7 +41,6 @@ public class ZipCodeScrapper {
     private List<ZipModel> zipModels;
     private WebDriver driver;
     private List<String> tabs;
-    private Wait<WebDriver> wait;
     private Iterator<ZipModel> itr;
     private Thread scrapThread;
     private XSSFWorkbook workbook;
@@ -51,22 +50,29 @@ public class ZipCodeScrapper {
     private Map< String, Object[]> empinfo;
     int rowIndex = 1;
 
-    static int listIndex = 1;
+    public int listIndex;
+    String fileName;
+    public int toInt;
 
-    public static void main(String[] args) throws FileNotFoundException, IOException {
-        ZipCodeScrapper scrapper = new ZipCodeScrapper();
+    QueryHelper queryHelper;
 
-        if (scrapper.prepareList()) {
-            try {
-                scrapper.loadWebDriver();
-                scrapper.gotoHomePage();
-                scrapper.prepareSheet();
-                scrapper.getZip(listIndex++);
-                scrapper.printList();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(ZipCodeScrapper.class.getName()).log(Level.SEVERE, null, ex);
-            }
+    public static void main(String[] args) {
+        try {
+
+            ZipCodeScrapper zipCodeScrapper = new ZipCodeScrapper(1, 1000, "1-1000");
+            zipCodeScrapper.loadWebDriver();
+            zipCodeScrapper.prepareList();
+            zipCodeScrapper.getZip(zipCodeScrapper.listIndex);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+    ZipCodeScrapper(int i, int j, String name) {
+        listIndex = i;
+        toInt = j;
+        fileName = name;
+        queryHelper = new QueryHelper();
     }
 
     public void loadWebDriver() throws InterruptedException {
@@ -81,8 +87,7 @@ public class ZipCodeScrapper {
         });
 
         driver = driverManager.getFirefoxDriver();
-        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
-        wait = new WebDriverWait(driver, 2);
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 
     }
 
@@ -104,7 +109,7 @@ public class ZipCodeScrapper {
                 Cell cell3 = row.getCell(2);
                 Cell cell4 = row.getCell(3);
                 Cell cell5 = row.getCell(4);
-                zipModels.add(new ZipModel(String.valueOf(cell1),String.valueOf(cell2),String.valueOf(cell3),String.valueOf(cell4),String.valueOf(cell4), "",""));
+                zipModels.add(new ZipModel(String.valueOf(cell1), String.valueOf(cell2), String.valueOf(cell3), String.valueOf(cell4), String.valueOf(cell4), "", ""));
             }
 
             System.out.println("List Created...");
@@ -136,34 +141,33 @@ public class ZipCodeScrapper {
             spreadsheet.setColumnWidth(5, 3000);
             spreadsheet.setColumnWidth(6, 8000);
             empinfo = new TreeMap< String, Object[]>();
-            out = new FileOutputStream(new File("excel.xlsx"));
-            
-            empinfo.put(String.valueOf(rowIndex), new Object[]{"TIPO","DESCRIÇÃO ANTIGA","TIPO NOVO","DESCRIÇÃO NOVA","BAIRRO","CEP","NOME DA RUA"});
+            out = new FileOutputStream(new File("excel " + fileName + ".xlsx"));
+
+            empinfo.put(String.valueOf(rowIndex), new Object[]{"TIPO", "DESCRIÇÃO ANTIGA", "TIPO NOVO", "DESCRIÇÃO NOVA", "BAIRRO", "CEP", "NOME DA RUA"});
             rowIndex++;
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
     }
 
-    private String getZip(int index) throws InterruptedException {
-        System.out.println("Index : "+index);
-        
-        //15293
-        
-        if(index == 101)
+    public String getZip(int index) throws InterruptedException {
+        System.out.println("Index : " + index);
+
+        if (index == toInt) {
             return "";
+        }
 
         String A = zipModels.get(index).getA();
         String B = zipModels.get(index).getB();
         String C = zipModels.get(index).getC();
         String D = zipModels.get(index).getD();
         String E = zipModels.get(index).getE();
-        
+
         updateTabs();
         driver.switchTo().window(tabs.get(0));
 
         if (isPresent(driver, By.id("acesso-busca"))) {
-            
+
             WebElement txtSearch = driver.findElement(By.id("acesso-busca"));
             txtSearch.clear();
             txtSearch.sendKeys(D);
@@ -171,9 +175,9 @@ public class ZipCodeScrapper {
 
             updateTabs();
             driver.switchTo().window(tabs.get(1));
-            sleep(1000);
+            sleep(2000);
+            waitForLoad(driver);
             if (isPresent(driver, "/html/body/div[1]/div[3]/div[2]/div/div/div[2]/div[2]/div[2]/table/tbody/tr[2]/td[4]")) {
-                //System.out.println(driver.findElement(By.xpath("/html/body/div[1]/div[3]/div[2]/div/div/div[2]/div[2]/div[2]/table/tbody/tr[2]/td[4]")).getText());
 
                 WebElement table = driver.findElement(By.xpath("/html/body/div[1]/div[3]/div[2]/div/div/div[2]/div[2]/div[2]/table"));
                 List<WebElement> allRows = table.findElements(By.tagName("tr"));
@@ -185,7 +189,8 @@ public class ZipCodeScrapper {
                     String zipCode = driver.findElement(By.xpath("/html/body/div[1]/div[3]/div[2]/div/div/div[2]/div[2]/div[2]/table/tbody/tr[" + i + "]/td[4]")).getText();
                     if (zipCode.substring(0, 2).equals("69")) {
                         System.out.println("zip matched at " + i + " is " + zipCode);
-                        empinfo.put(String.valueOf(rowIndex), new Object[]{A,B,C,D,E,zipCode,zipAddress});
+                        //empinfo.put(String.valueOf(rowIndex), new Object[]{A, B, C, D, E, zipCode, zipAddress});
+                        queryHelper.insertZip(A, B, C, D, E, zipCode, zipAddress);
                         rowIndex++;
                         isMatched = 1;
                         break;
@@ -193,7 +198,8 @@ public class ZipCodeScrapper {
                 }
 
                 if (isMatched == 0) {
-                    empinfo.put(String.valueOf(rowIndex), new Object[]{A,B,C,D,E,"",""});
+                    //empinfo.put(String.valueOf(rowIndex), new Object[]{A, B, C, D, E, "", ""});
+                    queryHelper.insertZip(A, B, C, D, E, "", "");
                     rowIndex++;
                     //System.out.println("no zip matched");
                 }
@@ -201,7 +207,8 @@ public class ZipCodeScrapper {
                 driver.close();
                 getZip(++index);
             } else {
-                empinfo.put(String.valueOf(rowIndex), new Object[]{A,B,C,D,E,"",""});
+                //empinfo.put(String.valueOf(rowIndex), new Object[]{A, B, C, D, E, "", ""});
+                queryHelper.insertZip(A, B, C, D, E, "", "");
                 rowIndex++;
                 driver.close();
                 getZip(++index);
@@ -217,7 +224,7 @@ public class ZipCodeScrapper {
         return "";
     }
 
-    private void printList() {
+    public void printList() {
         try {
 
             Set< String> keyid = empinfo.keySet();
@@ -259,6 +266,20 @@ public class ZipCodeScrapper {
 
     public void updateTabs() {
         tabs = new ArrayList<String>(driver.getWindowHandles());
+    }
+
+    public void waitForLoad(WebDriver driver) {
+        try {
+            ExpectedCondition<Boolean> pageLoadCondition = new ExpectedCondition<Boolean>() {
+                public Boolean apply(WebDriver driver) {
+                    return ((JavascriptExecutor) driver).executeScript("return document.readyState").equals("complete");
+                }
+            };
+            WebDriverWait wait = new WebDriverWait(driver, 20);
+            wait.until(pageLoadCondition);
+        } catch (Exception e) {
+
+        }
     }
 
 }
